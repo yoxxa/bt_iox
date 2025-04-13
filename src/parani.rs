@@ -1,3 +1,4 @@
+use std::io::{BufReader, BufRead};
 use std::time::Duration;
 use std::env;
 
@@ -13,13 +14,13 @@ struct BtInqData {
     timestamp: OffsetDateTime
 }
 
-struct ParaniSD1000 {
+pub struct ParaniSD1000 {
     port: Box<dyn serialport::SerialPort>,
     data: Vec<BtInqData>
 }
 
 impl ParaniSD1000 {
-    fn new() -> ParaniSD1000 {
+    pub fn new() -> ParaniSD1000 {
         Self {
             port: serialport::new(
                 env::var("IR_PARANI_SERIAL").unwrap_or("/dev/ttySerial".into()), 
@@ -65,5 +66,11 @@ impl ParaniSD1000 {
                 break;
             }
         }
+    }
+
+    pub fn run(&mut self) {
+        self.bt_cancel();
+        self.bt_inq();
+        self.collect_data();
     }
 }
