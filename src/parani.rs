@@ -7,6 +7,12 @@ use serialport;
 
 const BT_CANCEL: &[u8; 12] = b"AT+BTCANCEL\r";
 const BT_INQ: &[u8; 10] = b"AT+BTINQ?\r";
+// S4=0 sets BT_INQ to anonymise device name, saving operations
+const ATS_S4: &[u8; 7] = b"ATS4=0\r";
+// S24=1000 sets max device scan amount to 1000
+const ATS_S24: &[u8; 11] = b"ATS24=1000\r";
+// S33=15 sets scan time to 15 seconds
+const ATS_S33: &[u8; 9] = b"ATS33=15\r";
 
 #[derive(Debug)]
 struct BtInqData {
@@ -70,9 +76,32 @@ impl ParaniSD1000 {
         }
     }
 
+    fn ats_s4(&mut self) {
+        self.port.write_all(ATS_S4).expect("ATS_S4 write error");
+    }
+
+    fn ats_s24(&mut self) {
+        self.port.write_all(ATS_S24).expect("ATS_S24 write error");
+    }
+
+    fn ats_s33(&mut self) {
+        self.port.write_all(ATS_S33).expect("ATS_S33 write error");
+    }
+
+    fn set_s_registers(&mut self) {
+        self.ats_s4();
+        self.ats_s24();
+        self.ats_s33();
+        self.port.clear(serialport::ClearBuffer::All)
+        .expect("Failed to clear buffer");
+    }
+
     pub fn run(&mut self) {
-        self.bt_cancel();
-        self.bt_inq();
-        self.collect_data();
+        self.set_s_registers();
+        loop {
+            self.bt_cancel();
+            self.bt_inq();
+            self.collect_data();
+        }
     }
 }
