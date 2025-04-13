@@ -45,18 +45,18 @@ impl ParaniSD1000 {
         self.data.clear();
         let mut port = BufReader::new(&mut *self.port);
         loop {
-            let mut serial_buf = String::new();
+            let mut line = String::new();
             // TODO - Handle timeout error, will occur once .timeout() duration is reached. Use match.
-            port.read_line(&mut serial_buf).expect("Error reading");
+            port.read_line(&mut line).expect("Error reading");
     
             // TODO - Use match statements in future iteration?
-            if serial_buf != "OK\r\n" {
-                if serial_buf != "\r\n"
-                && serial_buf != "\\r\\n"
-                && serial_buf != ""
-                && serial_buf != "ERROR\\r\\n"
-                && serial_buf != "ERROR\r\n" {
-                    let parts = serial_buf.split(",");
+            if line != "OK\r\n" {
+                if line != "\r\n"
+                && line != "\\r\\n"
+                && line != ""
+                && line != "ERROR\\r\\n"
+                && line != "ERROR\r\n" {
+                    let parts = line.split(",");
                     let collection: Vec<&str> = parts.collect();
                     
                     self.data.push(BtInqData {
