@@ -1,0 +1,9 @@
+[package]
+name = "bt_iox"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serialport = { version = "4.7.1", default-features =  false }
+deku = "0.18.1"
+time  = "0.3"

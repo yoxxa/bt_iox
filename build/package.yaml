@@ -1,0 +1,32 @@
+descriptor-schema-version: "2.6"
+
+info:
+  name: "parani"
+  description: "Application that sends and receives data from SENA Parani SD1000."
+  version: "1.0"
+  author-link: "https://github.com/harthomp"
+  author-name: "Harrison Thompson Buckley"
+
+app:
+  cpuarch: "aarch64"
+  type: "docker"
+  resources:
+    profile: custom
+    cpu: "300"
+    memory: "200"
+    disk: "500"
+    devices:
+      -
+        label: IR_PARANI_SERIAL
+        type: serial
+        usage: "async0"
+      - 
+        label: IR_OTHER_SERIAL
+        type: serial
+        usage: "async1"
+    network:
+      -
+        interface-name: "eth0"
+  startup:
+    rootfs: rootfs.tar
+    target: ["/app/bt_iox"]
