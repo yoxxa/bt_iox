@@ -4,6 +4,9 @@ use std::env;
 use time::OffsetDateTime;
 use serialport;
 
+const BT_CANCEL: &[u8; 12] = b"AT+BTCANCEL\r";
+const BT_INQ: &[u8; 10] = b"AT+BTINQ?\r";
+
 struct BtInqData {
     mac_address: String,
     timestamp: OffsetDateTime
@@ -25,5 +28,13 @@ impl ParaniSD1000 {
                 .open().expect("Failed to open port"),
             data: Vec::new()
         }
+    }
+
+    fn bt_cancel(&mut self) {
+        self.port.write_all(BT_CANCEL).expect("BT_CANCEL write failure");
+    }
+
+    fn bt_inq(&mut self) {
+        self.port.write_all(BT_INQ).expect("BT_INQ write error");
     }
 }
