@@ -7,3 +7,4 @@ edition = "2021"
 serialport = { version = "4.7.1", default-features =  false }
 deku = "0.18.1"
 time  = "0.3"
+configparser = "3.0.5"

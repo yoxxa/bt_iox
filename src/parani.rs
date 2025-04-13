@@ -5,6 +5,8 @@ use std::env;
 use time::OffsetDateTime;
 use serialport;
 
+use crate::config::Configuration;
+
 const BT_CANCEL: &[u8; 12] = b"AT+BTCANCEL\r";
 const BT_INQ: &[u8; 10] = b"AT+BTINQ?\r";
 // S4=0 sets BT_INQ to anonymise device name, saving operations
@@ -21,13 +23,15 @@ struct BtInqData {
 }
 
 pub struct ParaniSD1000 {
+    config: Configuration,
     port: Box<dyn serialport::SerialPort>,
     data: Vec<BtInqData>
 }
 
 impl ParaniSD1000 {
-    pub fn new() -> ParaniSD1000 {
+    pub fn new(config: Configuration) -> ParaniSD1000 {
         Self {
+            config: config,
             port: serialport::new(
                 env::var("IR_PARANI_SERIAL").unwrap_or("/dev/ttySerial".into()), 
                 57600
