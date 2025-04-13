@@ -41,6 +41,8 @@ impl ParaniSD1000 {
     }
 
     fn collect_data(&mut self) {
+        // Remove all previous elements from Vec<BtInqData> so doesn't compound over time
+        self.data.clear();
         let mut port = BufReader::new(&mut *self.port);
         loop {
             let mut serial_buf = String::new();
