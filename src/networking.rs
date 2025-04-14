@@ -7,7 +7,7 @@ fn oneths_time(time: u8) -> u8 { time % 10 }
 
 #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(endian = "big")]
-struct IncomingMessageProtocol {
+pub struct IncomingMessageProtocol {
     // Header fields
     signature: u8,
     #[deku(bits = 6)]
@@ -60,15 +60,17 @@ struct IncomingMessageProtocol {
 }
 
 impl IncomingMessageProtocol {
-    pub fn new(mac_address: [u8; 12], timestamp: OffsetDateTime) -> IncomingMessageProtocol {
+    pub fn new(asset_number: u16, mac_address: [u8; 12], timestamp: OffsetDateTime) -> IncomingMessageProtocol {
+        // Creates array with [0] holding high byte, [1] holding low byte
+        let asset_number= asset_number.to_be_bytes();
         // Use these defaults for now, update later
         Self {
             signature: 0xEE,
             source_identifier_type: 60,
             has_ibeacon: 0,
             padding1: 0,
-            low_byte_asset_number: 0xFF,
-            high_byte_asset_number: 0x00,
+            low_byte_asset_number: asset_number[1],
+            high_byte_asset_number: asset_number[0],
             source_identifier: mac_address,
             padding2: 0,
             ten_seconds: tenths_time(timestamp.second()),
