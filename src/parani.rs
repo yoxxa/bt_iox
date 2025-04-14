@@ -1,11 +1,15 @@
 use std::io::{BufReader, BufRead};
 use std::time::Duration;
 use std::env;
+use std::net::UdpSocket;
 
 use time::OffsetDateTime;
 use serialport;
 
-use crate::config::Configuration;
+use crate::{
+    networking::IncomingMessageProtocol,
+    config::Configuration
+};
 
 const BT_CANCEL: &[u8; 12] = b"AT+BTCANCEL\r";
 const BT_INQ: &[u8; 10] = b"AT+BTINQ?\r";
@@ -100,12 +104,27 @@ impl ParaniSD1000 {
         .expect("Failed to clear buffer");
     }
 
+    fn send_data_to_server(&self) {
+        let socket = UdpSocket::bind("0.0.0.0:0").expect("couldn't bind to address");
+        socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port))
+            .expect("connect function failed");
+        for data in &self.data {
+            let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
+                self.config.parani_asset_number,
+                data.mac_address.as_bytes().try_into().unwrap(),
+                data.timestamp
+            );
+            packet.send_imp_v1(&socket);
+        }
+    }
+
     pub fn run(&mut self) {
         self.set_s_registers();
         loop {
             self.bt_cancel();
             self.bt_inq();
             self.collect_data();
+            self.send_data_to_server();
         }
     }
 }

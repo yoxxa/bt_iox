@@ -1,5 +1,6 @@
 use time::OffsetDateTime;
 use deku::prelude::*;
+use std::net::UdpSocket;
 
 // Used for setting packet parameters
 fn tenths_time(time: u8) -> u8 { (time / 10) % 10 }
@@ -91,5 +92,9 @@ impl IncomingMessageProtocol {
             ten_year: tenths_time((timestamp.year() - 2000).try_into().unwrap()),
             year: oneths_time((timestamp.year() - 2000).try_into().unwrap())
         }
+    }
+
+    pub fn send_imp_v1(&self, socket: &UdpSocket) {
+        socket.send(&self.to_bytes().unwrap()).expect("couldn't send message");
     }
 }
