@@ -104,10 +104,7 @@ impl ParaniSD1000 {
         .expect("Failed to clear buffer");
     }
 
-    fn send_data_to_server(&self) {
-        let socket = UdpSocket::bind("0.0.0.0:0").expect("couldn't bind to address");
-        socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port))
-            .expect("connect function failed");
+    fn send_data_to_server(&self, socket: &UdpSocket) {
         for data in &self.data {
             let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
                 self.config.parani_asset_number,
@@ -119,12 +116,15 @@ impl ParaniSD1000 {
     }
 
     pub fn run(&mut self) {
+        let socket = UdpSocket::bind("0.0.0.0:0").expect("couldn't bind to address");
+        socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port))
+            .expect("connect function failed");
         self.set_s_registers();
         loop {
             self.bt_cancel();
             self.bt_inq();
             self.collect_data();
-            self.send_data_to_server();
+            self.send_data_to_server(&socket);
         }
     }
 }
