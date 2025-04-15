@@ -1,6 +1,12 @@
 use time::OffsetDateTime;
 use deku::prelude::*;
-use std::net::UdpSocket;
+use std::{
+    net::UdpSocket,
+    thread, 
+    time::Duration
+};
+
+use crate::config::Configuration;
 
 // Used for setting packet parameters
 fn tenths_time(time: u8) -> u8 { (time / 10) % 10 }
@@ -96,5 +102,36 @@ impl IncomingMessageProtocol {
 
     pub fn send_imp_v1(&self, socket: &UdpSocket) {
         socket.send(&self.to_bytes().unwrap()).expect("couldn't send message");
+    }
+}
+
+pub struct Heartbeat {
+    config: Configuration
+}
+
+impl Heartbeat {
+    pub fn new(config: Configuration) -> Heartbeat {
+        Self {
+            config: config
+        }
+    }
+
+    fn heartbeat(&self, socket: &UdpSocket) {
+        let packet = IncomingMessageProtocol::new(
+            self.config.parani_asset_number,
+            *b"            ", 
+            OffsetDateTime::now_utc()
+        );
+        packet.send_imp_v1(&socket);
+    }
+
+    pub fn run(self) {
+        let socket = UdpSocket::bind("0.0.0.0:0").expect("couldn't bind to address");
+        socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port))
+            .expect("connect function failed");
+        loop {
+            self.heartbeat(&socket);
+            thread::sleep(Duration::from_secs(15));
+        }
     }
 }

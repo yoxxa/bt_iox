@@ -1,5 +1,6 @@
 use configparser::ini::Ini;
 
+#[derive(Clone)]
 pub struct Configuration {
     pub server_ip_address: String,
     pub server_port: u16,
