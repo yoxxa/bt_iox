@@ -118,14 +118,14 @@ impl Heartbeat {
 
     fn heartbeat(&self, socket: &UdpSocket) {
         let packet = IncomingMessageProtocol::new(
-            self.config.parani_asset_number,
+            self.config.asset_number,
             *b"            ", 
             OffsetDateTime::now_utc()
         );
         packet.send_imp_v1(&socket);
     }
 
-    pub fn run(self) {
+    pub fn run(&self) {
         let socket = UdpSocket::bind("0.0.0.0:0").expect("couldn't bind to address");
         socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port))
             .expect("connect function failed");

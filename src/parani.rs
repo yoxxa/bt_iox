@@ -107,7 +107,7 @@ impl ParaniSD1000 {
     fn send_data_to_server(&self, socket: &UdpSocket) {
         for data in &self.data {
             let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
-                self.config.parani_asset_number,
+                self.config.asset_number,
                 data.mac_address.as_bytes().try_into().unwrap(),
                 data.timestamp
             );
