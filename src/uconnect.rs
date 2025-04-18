@@ -40,32 +40,38 @@ impl UConnectS2B5232R {
 
     fn collect_data(&mut self) {
         let mut port = BufReader::new(&mut *self.port);
-
         let mut line = String::new();
-            // TODO - Handle timeout error, will occur once .timeout() duration is reached. Use match.
-        port.read_line(&mut line).expect("Error reading");
-    
-        // TODO - Use match statements in future iteration?
-        if line != "\r\n"
-        && line != "\\r\\n"
-        && line != "" {
-            let parts = line.split(",");
-            let collection: Vec<&str> = parts.collect();
-                    
-            self.data = Some(Data {
-                mac_address: collection[3].to_string(),
-                timestamp: OffsetDateTime::now_utc()
-            });
-        } 
+        match port.read_line(&mut line) {
+            Ok(_) => {
+                // TODO - Use match statements in future iteration?
+                if line != "\r\n"
+                && line != "\\r\\n"
+                && line != "" {
+                    let collection: Vec<&str> = line.split(",").collect();
+                    self.data = Some(Data {
+                        mac_address: collection[3].to_string(),
+                        timestamp: OffsetDateTime::now_utc()
+                    });
+                } 
+            },
+            Err(_) => {
+                self.data = None;
+            }
+        }
     }
 
     fn send_data_to_server(&self, socket: &UdpSocket) {
-        let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
-            self.config.asset_number,
-            self.data.as_ref().unwrap().mac_address.as_bytes().try_into().unwrap(),
-            self.data.as_ref().unwrap().timestamp
-        );
-        packet.send_imp_v1(&socket);
+        match &self.data {
+            Some(data) => {
+                let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
+                    self.config.asset_number,
+                data.mac_address.as_bytes().try_into().unwrap(),
+                    data.timestamp
+                );
+                packet.send_imp_v1(&socket);
+            },
+            None => {}
+        }
     }
     
     pub fn run(&mut self) {
