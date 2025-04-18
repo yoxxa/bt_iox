@@ -126,9 +126,14 @@ impl Heartbeat {
     }
 
     pub fn run(&self) {
-        let socket = UdpSocket::bind("0.0.0.0:0").expect("couldn't bind to address");
-        socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port))
-            .expect("connect function failed");
+        let socket = match UdpSocket::bind("0.0.0.0:0") {
+            Ok(socket) => socket,
+            Err(error) => todo!("error handling for failed socket bind")
+        };
+        match socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port)) {
+            Ok(_) => {},
+            Err(error) => { eprintln!("connect function failed"); }
+        };
         loop {
             self.heartbeat(&socket);
             thread::sleep(Duration::from_secs(15));
