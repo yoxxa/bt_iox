@@ -60,26 +60,28 @@ impl ParaniSD1000 {
         let mut port = BufReader::new(&mut *self.port);
         loop {
             let mut line = String::new();
-            // TODO - Handle timeout error, will occur once .timeout() duration is reached. Use match.
-            port.read_line(&mut line).expect("Error reading");
-    
-            // TODO - Use match statements in future iteration?
-            if line != "OK\r\n" {
-                if line != "\r\n"
-                && line != "\\r\\n"
-                && line != ""
-                && line != "ERROR\\r\\n"
-                && line != "ERROR\r\n" {
-                    let parts = line.split(",");
-                    let collection: Vec<&str> = parts.collect();
-                    
-                    self.data.push(BtInqData {
-                        mac_address: collection[0].to_string(),
-                        timestamp: OffsetDateTime::now_utc()
-                    });
+            match port.read_line(&mut line) {
+                Ok(_) => {
+                // TODO - Use match statements in future iteration?
+                    if line != "OK\r\n" {
+                        if line != "\r\n"
+                        && line != "\\r\\n"
+                        && line != ""
+                        && line != "ERROR\\r\\n"
+                        && line != "ERROR\r\n" {
+                            let collection: Vec<&str> = line.split(",").collect();
+                            self.data.push(BtInqData {
+                                mac_address: collection[0].to_string(),
+                                timestamp: OffsetDateTime::now_utc()
+                            });
+                        }
+                    } else {
+                        break;
+                    }
                 }
-            } else {
-                break;
+                // this should really only be reached upon device or cable failure.
+                // TODO - write handler for this error case
+                Err(error) => {}
             }
         }
     }
@@ -105,6 +107,7 @@ impl ParaniSD1000 {
     }
 
     fn send_data_to_server(&self, socket: &UdpSocket) {
+        // if there is no data in &self.data, for loop is skipped
         for data in &self.data {
             let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
                 self.config.asset_number,
