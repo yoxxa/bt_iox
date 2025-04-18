@@ -47,11 +47,21 @@ impl ParaniSD1000 {
     }
 
     fn bt_cancel(&mut self) {
-        self.port.write_all(BT_CANCEL).expect("BT_CANCEL write failure");
+        match self.port.write_all(BT_CANCEL) {
+            Ok(_) => {},
+            Err(error) => {
+                eprintln!("BT_CANCEL write failure");
+            }
+        }
     }
 
     fn bt_inq(&mut self) {
-        self.port.write_all(BT_INQ).expect("BT_INQ write error");
+        match self.port.write_all(BT_INQ) {
+            Ok(_) => {},
+            Err(error) => {
+                eprintln!("BT_INQ write error");
+            }
+        }
     }
 
     fn collect_data(&mut self) {
@@ -78,7 +88,7 @@ impl ParaniSD1000 {
                     } else {
                         break;
                     }
-                }
+                },
                 // this should really only be reached upon device or cable failure.
                 // TODO - write handler for this error case
                 Err(error) => {}
@@ -87,23 +97,42 @@ impl ParaniSD1000 {
     }
 
     fn ats_s4(&mut self) {
-        self.port.write_all(ATS_S4).expect("ATS_S4 write error");
+        match self.port.write_all(ATS_S4) {
+            Ok(_) => {},
+            Err(error) => {
+                eprintln!("ATS_S4 write error");
+            }
+        }
     }
 
     fn ats_s24(&mut self) {
-        self.port.write_all(ATS_S24).expect("ATS_S24 write error");
+        match self.port.write_all(ATS_S24) {
+            Ok(_) => {},
+            Err(error) => {
+                eprintln!("ATS_S24 write error");
+            }
+        }
     }
 
     fn ats_s33(&mut self) {
-        self.port.write_all(ATS_S33).expect("ATS_S33 write error");
+        match self.port.write_all(ATS_S33) {
+            Ok(_) => {},
+            Err(error) => {
+                eprintln!("ATS_S33 write error");
+            }  
+        }
     }
 
     fn set_s_registers(&mut self) {
         self.ats_s4();
         self.ats_s24();
         self.ats_s33();
-        self.port.clear(serialport::ClearBuffer::All)
-        .expect("Failed to clear buffer");
+        match self.port.clear(serialport::ClearBuffer::All) {
+            Ok(_) => {},
+            Err(error) => {
+                eprintln!("Failed to clear buffer")
+            }
+        }
     }
 
     fn send_data_to_server(&self, socket: &UdpSocket) {
