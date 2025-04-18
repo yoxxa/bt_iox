@@ -13,21 +13,15 @@ fn main() {
 
     let heartbeat = thread::Builder::new().name("heartbeat".to_string()).spawn( || {
         let heartbeat = networking::Heartbeat::new(config);
-        loop {
-            heartbeat.run();
-        }
+        heartbeat.run();
     });
     let parani = thread::Builder::new().name("parani".to_string()).spawn( || {
         let mut parani = parani::ParaniSD1000::new(config_parani);
-        loop {
-            parani.run();
-        }
+        parani.run();
     });
     let uconnect = thread::Builder::new().name("uconnect".to_string()).spawn( || {
         let mut uconnect = uconnect::UConnectS2B5232R::new(config_uconnect);
-        loop {
-            uconnect.run();
-        }
+        uconnect.run();
     });
 
     heartbeat.unwrap().join().unwrap();
