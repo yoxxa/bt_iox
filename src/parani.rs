@@ -34,14 +34,18 @@ pub struct ParaniSD1000 {
 
 impl ParaniSD1000 {
     pub fn new(config: Configuration) -> ParaniSD1000 {
+        let port = match serialport::new(
+            env::var("IR_PARANI_SERIAL").unwrap_or("/dev/ttySerial".into()), 
+            57600
+            )
+            .timeout(Duration::from_secs(16))
+            .open() {
+                Ok(port) => port,
+                Err(_) => panic!("Cannot open Parani device")
+            };
         Self {
             config: config,
-            port: serialport::new(
-                env::var("IR_PARANI_SERIAL").unwrap_or("/dev/ttySerial".into()), 
-                57600
-                )
-                .timeout(Duration::from_secs(16))
-                .open().expect("Failed to open port"),
+            port,
             data: Vec::new()
         }
     }

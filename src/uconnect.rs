@@ -25,15 +25,19 @@ pub struct UConnectS2B5232R {
 
 impl UConnectS2B5232R {
     pub fn new(config: Configuration) -> UConnectS2B5232R {
+        let port = match serialport::new(
+            env::var("IR_OTHER_SERIAL").unwrap_or("/dev/ttySerial1".into()), 
+            115200
+            )
+            // TODO - figure out appropriate timeout
+            .timeout(Duration::from_secs(600))
+            .open() {
+                Ok(port) => port,
+                Err(_) => panic!("Cannot open UConnect device")
+            };
         Self {
             config: config,
-            port: serialport::new(
-                env::var("IR_OTHER_SERIAL").unwrap_or("/dev/ttySerial1".into()), 
-                115200
-                )
-                // TODO - figure out appropriate timeout
-                .timeout(Duration::from_secs(600))
-                .open().expect("Failed to open port"),
+            port: port,
             data: None
         }
     }
