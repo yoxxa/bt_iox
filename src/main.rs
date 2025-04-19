@@ -9,8 +9,17 @@ mod config;
 
 #[instrument]
 fn main() {
-    tracing_subscriber::fmt::init();
-    info!("Initialised tracing_subscriber");
+    // Configure a custom event formatter
+    let format = tracing_subscriber::fmt::format()
+        .with_level(true) // do include levels in formatted output
+        .with_target(false) // do not include targets
+        .with_thread_names(true) // include the name of the current thread
+        .without_time() // do not include timestamps
+        .json();
+    tracing_subscriber::fmt()
+        .event_format(format)
+        .init();
+    info!("Initialised logging");
     
     // TODO - use a single Configuration and pass to all threads?
     let config = config::Configuration::new();
