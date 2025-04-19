@@ -123,7 +123,7 @@ pub struct Heartbeat {
 impl Heartbeat {
     pub fn new(config: Configuration) -> Heartbeat {
         Self {
-            config: config
+            config
         }
     }
 
