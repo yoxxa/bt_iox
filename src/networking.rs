@@ -5,6 +5,7 @@ use std::{
     thread, 
     time::Duration
 };
+use tracing::{error, debug, info};
 
 use crate::config::Configuration;
 
@@ -68,6 +69,7 @@ pub struct IncomingMessageProtocol {
 
 impl IncomingMessageProtocol {
     pub fn new(asset_number: u16, mac_address: [u8; 12], timestamp: OffsetDateTime) -> IncomingMessageProtocol {
+        debug!("Construct IncomingMessageProtocol");
         // Creates array with [0] holding high byte, [1] holding low byte
         let asset_number= asset_number.to_be_bytes();
         // Use these defaults for now, update later
@@ -102,9 +104,13 @@ impl IncomingMessageProtocol {
 
     pub fn send_imp_v1(&self, socket: &UdpSocket) {
         match socket.send(&self.to_bytes().unwrap()) {
-            Ok(_) => {},
-            Err(_) => {
-                eprintln!("couldn't send IMP message");
+            Ok(size) => {
+                let peer = &socket.peer_addr().unwrap();
+                debug!("Ok() received for .send() on &UdpSocket - sent {size} bytes to {peer}");
+                info!("Sent IncomingMessageProtocol packet to server");
+            },
+            Err(error) => {
+                error!("Err() received for .send() on &UdpSocket - {error}");
             }
         };
     }
@@ -132,12 +138,25 @@ impl Heartbeat {
 
     pub fn run(&self) {
         let socket = match UdpSocket::bind("0.0.0.0:0") {
-            Ok(socket) => socket,
-            Err(error) => todo!("error handling for failed socket bind")
+            Ok(socket) => {
+                debug!("Ok() received for UdpSocket::bind");
+                info!("Success binding UdpSocket");
+                socket
+            },
+            Err(error) => {
+                error!("Err() received for UdpSocket::bind - {error}");
+                panic!("Failed to bind UdpSocket");
+            }
         };
         match socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port)) {
-            Ok(_) => {},
-            Err(error) => { eprintln!("connect function failed"); }
+            Ok(_) => {
+                debug!("Ok() received for .connect() on UdpSocket");
+                info!("Success connect UdpSocket to server");
+            },
+            Err(error) => { 
+                error!("Err() received for .connect() on UdpSocket - {error}");
+                panic!("Failed to connect UdpSocket to server"); 
+            }
         };
         loop {
             self.heartbeat(&socket);
