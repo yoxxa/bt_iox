@@ -2,7 +2,7 @@ use std::io::{BufReader, BufRead};
 use std::time::Duration;
 use std::env;
 use std::net::UdpSocket;
-
+use tracing::{error, debug, info};
 use time::OffsetDateTime;
 use serialport;
 
@@ -32,8 +32,16 @@ impl UConnectS2B5232R {
             // TODO - figure out appropriate timeout
             .timeout(Duration::from_secs(600))
             .open() {
-                Ok(port) => port,
-                Err(_) => panic!("Cannot open UConnect device")
+                Ok(port) => {
+                    debug!("Ok() received for .open() on SerialPortBuilder");
+                    info!("Success opening UConnectS2B5232R port");
+                    port
+                },
+                Err(error) => {
+                    debug!("Err() received for .open() on SerialPortBuilder - {error}");
+                    error!("Error opening UConnectS2B5232R port");
+                    panic!("Cannot open port to UConnectS2B5232R");
+                }
             };
         Self {
             config,
@@ -56,10 +64,12 @@ impl UConnectS2B5232R {
                         mac_address: collection[3].to_string(),
                         timestamp: OffsetDateTime::now_utc()
                     });
+                    debug!("Data received from UConnectS2B5232R");
                 } 
             },
             // indicates timeout has been reached
             Err(_) => {
+                debug!("No data received from UConnectS2B5232R within timeout period");
                 self.data = None;
             }
         }
@@ -68,7 +78,7 @@ impl UConnectS2B5232R {
     fn send_data_to_server(&self, socket: &UdpSocket) {
         match &self.data {
             Some(data) => {
-                let mac_address = data.mac_address.as_bytes();  //{
+                let mac_address = data.mac_address.as_bytes();
                 // check for if is valid MAC address length
                 if mac_address.len() == 12 {
                     let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
@@ -79,18 +89,33 @@ impl UConnectS2B5232R {
                     packet.send_imp_v1(&socket);
                 }
             },
-            None => {}
+            None => {
+                debug!("No data to send");
+            }
         }
     }
     
     pub fn run(&mut self) {
         let socket = match UdpSocket::bind("0.0.0.0:0") {
-            Ok(socket) => socket,
-            Err(error) => todo!("error handling for failed socket bind")
+            Ok(socket) => {
+                debug!("Ok() received for UdpSocket::bind");
+                info!("Success binding UdpSocket");
+                socket
+            },
+            Err(error) => {
+                error!("Err() received for UdpSocket::bind - {error}");
+                panic!("Failed to bind UdpSocket");
+            }
         };
         match socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port)) {
-            Ok(_) => {},
-            Err(error) => { eprintln!("connect function failed"); }
+            Ok(_) => {
+                debug!("Ok() received for .connect() on UdpSocket");
+                info!("Success connect UdpSocket to server");
+            },
+            Err(error) => { 
+                error!("Err() received for .connect() on UdpSocket - {error}");
+                panic!("Failed to connect UdpSocket to server"); 
+            }
         };
         loop {
             self.collect_data();
