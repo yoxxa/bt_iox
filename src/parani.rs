@@ -2,7 +2,7 @@ use std::io::{BufReader, BufRead};
 use std::time::Duration;
 use std::env;
 use std::net::UdpSocket;
-
+use tracing::{error, debug, info};
 use time::OffsetDateTime;
 use serialport;
 
@@ -40,8 +40,16 @@ impl ParaniSD1000 {
             )
             .timeout(Duration::from_secs(16))
             .open() {
-                Ok(port) => port,
-                Err(_) => panic!("Cannot open Parani device")
+                Ok(port) => {
+                    debug!("Ok() received for .open() on SerialPortBuilder");
+                    info!("Success opening ParaniSD1000 port");
+                    port
+                },
+                Err(error) => {
+                    debug!("Err() received for .open() on SerialPortBuilder - {error}");
+                    error!("Error opening ParaniSD1000 port");
+                    panic!("Cannot open port to ParaniSD1000");
+                }
             };
         Self {
             config,
@@ -52,18 +60,22 @@ impl ParaniSD1000 {
 
     fn bt_cancel(&mut self) {
         match self.port.write_all(BT_CANCEL) {
-            Ok(_) => {},
+            Ok(_) => {
+                debug!("Success writing BT_CANCEL");
+            },
             Err(error) => {
-                eprintln!("BT_CANCEL write failure");
+                error!("BT_CANCEL write failure - {error}");
             }
         }
     }
 
     fn bt_inq(&mut self) {
         match self.port.write_all(BT_INQ) {
-            Ok(_) => {},
+            Ok(_) => {
+                debug!("Success writing BT_INQ");
+            },
             Err(error) => {
-                eprintln!("BT_INQ write error");
+                error!("BT_INQ write failure - {error}");
             }
         }
     }
@@ -88,41 +100,51 @@ impl ParaniSD1000 {
                                 mac_address: collection[0].to_string(),
                                 timestamp: OffsetDateTime::now_utc()
                             });
+                            debug!("Data received for ParaniSD1000");
                         }
                     } else {
                         break;
                     }
                 },
-                // this should really only be reached upon device or cable failure.
-                // TODO - write handler for this error case
-                Err(error) => {}
+                // this should only be reached upon device or cable failure.
+                Err(error) => {
+                    debug!("Err() received for .read_line() on BufReader<&mut dyn SerialPort> - {error}");
+                    error!("Error reading data from ParaniSD1000");
+                    panic!("Error during data collection operation of ParaniSD1000, ensure ParaniSD1000 and cables are functional");
+                }
             }
         }
     }
 
     fn ats_s4(&mut self) {
         match self.port.write_all(ATS_S4) {
-            Ok(_) => {},
+            Ok(_) => {
+                info!("Success writing S4 register");
+            },
             Err(error) => {
-                eprintln!("ATS_S4 write error");
+                error!("ATS_S4 write error - {error}");
             }
         }
     }
 
     fn ats_s24(&mut self) {
         match self.port.write_all(ATS_S24) {
-            Ok(_) => {},
+            Ok(_) => {
+                info!("Success writing S24 register");
+            },
             Err(error) => {
-                eprintln!("ATS_S24 write error");
+                error!("ATS_S24 write error - {error}");
             }
         }
     }
 
     fn ats_s33(&mut self) {
         match self.port.write_all(ATS_S33) {
-            Ok(_) => {},
+            Ok(_) => {
+                info!("Success writing S33 register");
+            },
             Err(error) => {
-                eprintln!("ATS_S33 write error");
+                error!("ATS_S33 write error - {error}");
             }  
         }
     }
@@ -134,12 +156,15 @@ impl ParaniSD1000 {
         match self.port.clear(serialport::ClearBuffer::All) {
             Ok(_) => {},
             Err(error) => {
-                eprintln!("Failed to clear buffer")
+                error!("Failed to clear buffer - {error}")
             }
         }
     }
 
     fn send_data_to_server(&self, socket: &UdpSocket) {
+        if self.data.is_empty() {
+            debug!("No data to send");
+        }
         // if there is no data in &self.data, for loop is skipped
         for data in &self.data {
             let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
@@ -153,12 +178,25 @@ impl ParaniSD1000 {
 
     pub fn run(&mut self) {
         let socket = match UdpSocket::bind("0.0.0.0:0") {
-            Ok(socket) => socket,
-            Err(error) => todo!("error handling for failed socket bind")
+            Ok(socket) => {
+                debug!("Ok() received for UdpSocket::bind");
+                info!("Success binding UdpSocket");
+                socket
+            },
+            Err(error) => {
+                error!("Err() received for UdpSocket::bind - {error}");
+                panic!("Failed to bind UdpSocket");
+            }
         };
         match socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port)) {
-            Ok(_) => {},
-            Err(error) => { eprintln!("connect function failed"); }
+            Ok(_) => {
+                debug!("Ok() received for .connect() on UdpSocket");
+                info!("Success connect UdpSocket to server");
+            },
+            Err(error) => { 
+                error!("Err() received for .connect() on UdpSocket - {error}");
+                panic!("Failed to connect UdpSocket to server"); 
+            }
         };
         self.set_s_registers();
         loop {
