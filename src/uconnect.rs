@@ -36,8 +36,8 @@ impl UConnectS2B5232R {
                 Err(_) => panic!("Cannot open UConnect device")
             };
         Self {
-            config: config,
-            port: port,
+            config,
+            port,
             data: None
         }
     }

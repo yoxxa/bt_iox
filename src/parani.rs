@@ -44,7 +44,7 @@ impl ParaniSD1000 {
                 Err(_) => panic!("Cannot open Parani device")
             };
         Self {
-            config: config,
+            config,
             port,
             data: Vec::new()
         }
