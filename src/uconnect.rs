@@ -64,20 +64,16 @@ impl UConnectS2B5232R {
     fn send_data_to_server(&self, socket: &UdpSocket) {
         match &self.data {
             Some(data) => {
-                // TODO - revise this to not throw a panic!() and recover
-                let mac_address: [u8; 12] = match data.mac_address.as_bytes().try_into()  {
-                    Ok(mac_address) => mac_address,
-                    Err(_) => {
-                        eprintln!("read caused fail for UConnect");
-                        panic!("TryFromSliceError received");
-                    }
-                };
-                let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
-                    self.config.asset_number,
-                    mac_address,
-                    data.timestamp
-                );
-                packet.send_imp_v1(&socket);
+                let mac_address = data.mac_address.as_bytes();  //{
+                // check for if is valid MAC address length
+                if mac_address.len() == 12 {
+                    let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
+                        self.config.asset_number,
+                        mac_address.try_into().unwrap(),
+                        data.timestamp
+                    );
+                    packet.send_imp_v1(&socket);
+                }
             },
             None => {}
         }
