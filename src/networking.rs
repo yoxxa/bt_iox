@@ -101,7 +101,12 @@ impl IncomingMessageProtocol {
     }
 
     pub fn send_imp_v1(&self, socket: &UdpSocket) {
-        socket.send(&self.to_bytes().unwrap()).expect("couldn't send message");
+        match socket.send(&self.to_bytes().unwrap()) {
+            Ok(_) => {},
+            Err(_) => {
+                eprintln!("couldn't send IMP message");
+            }
+        };
     }
 }
 
