@@ -107,6 +107,7 @@ impl ParaniSD1000 {
                     }
                 },
                 // this should only be reached upon device or cable failure.
+                // TODO - implement some kind of .is_alive() function to test conn to Parani
                 Err(error) => {
                     debug!("Err() received for .read_line() on BufReader<&mut dyn SerialPort> - {error}");
                     error!("Error reading data from ParaniSD1000");
