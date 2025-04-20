@@ -116,6 +116,31 @@ impl IncomingMessageProtocol {
     }
 }
 
+pub fn create_connected_socket(config: &Configuration) -> UdpSocket {
+    let socket = match UdpSocket::bind("0.0.0.0:0") {
+        Ok(socket) => {
+            debug!("Ok() received for UdpSocket::bind");
+            info!("Success binding UdpSocket");
+            socket
+        },
+        Err(error) => {
+            error!("Err() received for UdpSocket::bind - {error}");
+            panic!("Failed to bind UdpSocket");
+        }
+    };
+    match socket.connect(format!("{}:{}", config.server_ip_address, config.server_port)) {
+        Ok(_) => {
+            debug!("Ok() received for .connect() on UdpSocket");
+            info!("Success connect UdpSocket to server");
+        },
+        Err(error) => { 
+            error!("Err() received for .connect() on UdpSocket - {error}");
+            panic!("Failed to connect UdpSocket to server"); 
+        }
+    };
+    socket
+}
+
 pub struct Heartbeat {
     config: Configuration
 }
@@ -137,27 +162,7 @@ impl Heartbeat {
     }
 
     pub fn run(&self) {
-        let socket = match UdpSocket::bind("0.0.0.0:0") {
-            Ok(socket) => {
-                debug!("Ok() received for UdpSocket::bind");
-                info!("Success binding UdpSocket");
-                socket
-            },
-            Err(error) => {
-                error!("Err() received for UdpSocket::bind - {error}");
-                panic!("Failed to bind UdpSocket");
-            }
-        };
-        match socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port)) {
-            Ok(_) => {
-                debug!("Ok() received for .connect() on UdpSocket");
-                info!("Success connect UdpSocket to server");
-            },
-            Err(error) => { 
-                error!("Err() received for .connect() on UdpSocket - {error}");
-                panic!("Failed to connect UdpSocket to server"); 
-            }
-        };
+        let socket = create_connected_socket(&self.config);
         loop {
             self.heartbeat(&socket);
             thread::sleep(Duration::from_secs(15));

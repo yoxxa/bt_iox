@@ -7,7 +7,10 @@ use time::OffsetDateTime;
 use serialport;
 
 use crate::{
-    networking::IncomingMessageProtocol,
+    networking::{
+        IncomingMessageProtocol,
+        create_connected_socket
+    },
     config::Configuration
 };
 
@@ -96,27 +99,7 @@ impl UConnectS2B5232R {
     }
     
     pub fn run(&mut self) {
-        let socket = match UdpSocket::bind("0.0.0.0:0") {
-            Ok(socket) => {
-                debug!("Ok() received for UdpSocket::bind");
-                info!("Success binding UdpSocket");
-                socket
-            },
-            Err(error) => {
-                error!("Err() received for UdpSocket::bind - {error}");
-                panic!("Failed to bind UdpSocket");
-            }
-        };
-        match socket.connect(format!("{}:{}", self.config.server_ip_address, self.config.server_port)) {
-            Ok(_) => {
-                debug!("Ok() received for .connect() on UdpSocket");
-                info!("Success connect UdpSocket to server");
-            },
-            Err(error) => { 
-                error!("Err() received for .connect() on UdpSocket - {error}");
-                panic!("Failed to connect UdpSocket to server"); 
-            }
-        };
+        let socket = create_connected_socket(&self.config);
         loop {
             self.collect_data();
             self.send_data_to_server(&socket);
