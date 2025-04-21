@@ -141,7 +141,6 @@ However, for the sake of readability, I simplified the Parani's filtering and da
 - Some kind of set env variable for `RUST_LOG=debug` to see debug level logging.
 - Using lifetimes instead of cloning the Configuration struct into threads.
 - Validate configuration parameters instead of absolute .unwrap()'s inside struct constructor.
-- impl Default for IncomingMessageProtocol, to set default values for struct members.
 - Some kind of .is_alive() fn for ParaniSD1000 that check conn to device is still functional.
 - Define appropriate read timeout period for UConnectS2B5232R.
 - Thread recovery strategies, if any, or definitely needed.
