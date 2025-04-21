@@ -68,37 +68,29 @@ pub struct IncomingMessageProtocol {
 }
 
 impl IncomingMessageProtocol {
-    pub fn new(asset_number: u16, mac_address: [u8; 12], timestamp: OffsetDateTime) -> IncomingMessageProtocol {
+    pub fn new(source_identifier_type: u8, asset_number: u16, mac_address: [u8; 12], timestamp: OffsetDateTime) -> IncomingMessageProtocol {
         debug!("Construct IncomingMessageProtocol");
         // Creates array with [0] holding high byte, [1] holding low byte
         let asset_number= asset_number.to_be_bytes();
-        // Use these defaults for now, update later
         Self {
-            signature: 0xEE,
-            source_identifier_type: 60,
-            has_ibeacon: 0,
-            padding1: 0,
+            source_identifier_type,
             low_byte_asset_number: asset_number[1],
             high_byte_asset_number: asset_number[0],
             source_identifier: mac_address,
-            padding2: 0,
             ten_seconds: tenths_time(timestamp.second()),
             seconds: oneths_time(timestamp.second()),
-            padding3: 0,
             ten_minutes: tenths_time(timestamp.minute()),
             minutes: oneths_time(timestamp.minute()),
-            padding4: 0,
             ten_hour: tenths_time(timestamp.hour()),
             hours: oneths_time(timestamp.hour()),
-            padding5: 0,
             ten_date: tenths_time(timestamp.day()),
             date: oneths_time(timestamp.day()),
-            is_utc: 1,
-            padding6: 0,
             ten_month: tenths_time(timestamp.month().into()),
             month: oneths_time(timestamp.month().into()),
             ten_year: tenths_time((timestamp.year() - 2000).try_into().unwrap()),
-            year: oneths_time((timestamp.year() - 2000).try_into().unwrap())
+            year: oneths_time((timestamp.year() - 2000).try_into().unwrap()),
+            // see `impl Default for IncomingMessageProtocol`
+            .. Default::default()
         }
     }
 
@@ -113,6 +105,38 @@ impl IncomingMessageProtocol {
                 error!("Err() received for .send() on &UdpSocket - {error}");
             }
         };
+    }
+}
+
+impl Default for IncomingMessageProtocol {
+    fn default() -> Self {
+        Self {
+            signature: 0xEE,
+            source_identifier_type: 0,
+            has_ibeacon: 0,
+            padding1: 0,
+            low_byte_asset_number: 1,
+            high_byte_asset_number: 0,
+            source_identifier: *b"            ",
+            padding2: 0,
+            ten_seconds: 0,
+            seconds: 0,
+            padding3: 0,
+            ten_minutes: 0,
+            minutes: 0,
+            padding4: 0,
+            ten_hour: 0,
+            hours: 0,
+            padding5: 0,
+            ten_date: 0,
+            date: 0,
+            is_utc: 1,
+            padding6: 0,
+            ten_month: 0,
+            month: 0,
+            ten_year: 0,
+            year: 0
+        }
     }
 }
 
@@ -154,6 +178,7 @@ impl Heartbeat {
 
     fn heartbeat(&self, socket: &UdpSocket) {
         let packet = IncomingMessageProtocol::new(
+            0, 
             self.config.asset_number,
             *b"            ", 
             OffsetDateTime::now_utc()

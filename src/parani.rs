@@ -172,6 +172,7 @@ impl ParaniSD1000 {
         // if there is no data in &self.data, for loop is skipped
         for data in &self.data {
             let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
+                60,
                 self.config.asset_number,
                 data.mac_address.as_bytes().try_into().unwrap(),
                 data.timestamp

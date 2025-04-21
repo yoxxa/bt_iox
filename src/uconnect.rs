@@ -85,6 +85,7 @@ impl UConnectS2B5232R {
                 // check for if is valid MAC address length
                 if mac_address.len() == 12 {
                     let packet: IncomingMessageProtocol = IncomingMessageProtocol::new(
+                        61,
                         self.config.asset_number,
                         mac_address.try_into().unwrap(),
                         data.timestamp
